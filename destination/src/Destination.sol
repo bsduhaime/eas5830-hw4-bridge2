@@ -24,25 +24,23 @@ contract Destination is AccessControl {
 
 	function wrap(address _underlying_token, address _recipient, uint256 _amount ) public onlyRole(WARDEN_ROLE) {
 		address wrap_token = wrapped_tokens[_underlying_token];
-		require(wrap_token != address(0), "Wrapped token not registered. Cannot wrap.")
-		
+		require(wrap_token != address(0), "Wrapped token not registered. Cannot wrap.");
+
 		BridgeToken(wrap_token).mint(_recipient, _amount);
 		emit Wrap(_underlying_token, wrap_token, _recipient, _amount);
 	}
 
 	function unwrap(address _wrapped_token, address _recipient, uint256 _amount ) public {
 		address underlying_token = underlying_tokens[_wrapped_token];
-		require(underlying_token != address(0), "Underlying token not registered. Cannot unwrap.")
+		require(underlying_token != address(0), "Underlying token not registered. Cannot unwrap.");
 
 		BridgeToken(_wrapped_token).burnFrom(msg.sender, _amount);
-		bool can_transfer = ERC20(underlying_token).transfer(_recipient, _amount);
-		require(can_transfer, "Token unwrap transfer failed!")
 
 		emit Unwrap(underlying_token, _wrapped_token, msg.sender, _recipient, _amount);
 	}
 
 	function createToken(address _underlying_token, string memory name, string memory symbol ) public onlyRole(CREATOR_ROLE) returns(address) {
-		BridgeToken new_wrap_token = new BridgeToken(_underlying_token, name, symbol, msg.sender);
+		BridgeToken new_wrap_token = new BridgeToken(_underlying_token, name, symbol, address(this));
 		address wrap_addr = address(new_wrap_token);
 		underlying_tokens[wrap_addr] = _underlying_token;
 		wrapped_tokens[_underlying_token] = wrap_addr;
@@ -53,3 +51,5 @@ contract Destination is AccessControl {
 	}
 
 }
+
+
